@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#192a3a" />
+  <meta name="description" content="Prototype d'application Web mobile pour le TP4 Cloud Computing R512." />
+  <title>Campus Cloud | TP4 R512</title>
+  <style>
+    :root {color-scheme:light; --ink:#172536; --muted:#566478; --bg:#f2f5f8; --paper:#fff; --blue:#1962a0; --line:#d9e0e7; --green:#2c7661}
+    * {box-sizing:border-box} body {margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.5}
+    header{background:#182a3c;color:white;padding:23px max(24px,calc((100% - 900px)/2)) 29px}header small{letter-spacing:.09em;text-transform:uppercase;opacity:.85}h1{font-size:clamp(1.7rem,4vw,2.35rem);margin:8px 0 8px;line-height:1.15} header p{margin:0;color:#d3dce5}
+    main{max-width:900px;margin:0 auto;padding:22px 20px 56px} .grid{display:grid;grid-template-columns:2fr 1fr;gap:16px}.panel{background:var(--paper);border:1px solid var(--line);border-radius:13px;padding:20px;box-shadow:0 2px 8px #142a4109;margin-bottom:16px}h2{font-size:1.13rem;margin:0 0 12px}.sub{font-size:.92rem;color:var(--muted);margin:0 0 16px}label{font-weight:600;display:block;font-size:.94rem;margin:0 0 7px} input{width:100%;padding:13px;border:1px solid #adb9c6;border-radius:8px;font:inherit;min-width:0}button{cursor:pointer;font:inherit;font-weight:600;border-radius:8px;padding:12px 16px;border:0;background:var(--blue);color:white}button:hover{filter:brightness(.93)}button:focus-visible,input:focus-visible{outline:3px solid #8db9ef;outline-offset:2px}.add{display:flex;gap:8px} .add input{flex:1}ul{list-style:none;padding:0;margin:12px 0 0}li{display:flex;gap:10px;justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding:10px 0;word-break:break-word}.del{background:#eaeff3;color:#35495a;padding:6px 10px;font-size:.86rem;flex:none}.pill{display:inline-flex;gap:7px;align-items:center;border-radius:30px;padding:6px 11px;background:#e3f1eb;color:#225e4c;font-weight:650;font-size:.86rem}.dot{width:8px;height:8px;background:#268b62;border-radius:50%}.pill.offline{background:#fcf0e3;color:#8e5316}.pill.offline .dot{background:#d38d32}.metric{font-size:2.1rem;font-weight:750;margin:3px 0 0}.muted{color:var(--muted);font-size:.87rem}.sep{height:1px;background:var(--line);margin:14px 0}.notice{background:#eef4fa;border-left:4px solid var(--blue);padding:12px 14px;border-radius:5px;font-size:.9rem;color:#284560}footer{color:#566478;text-align:center;font-size:.83rem;padding:4px 16px 28px}
+    @media(max-width:720px){.grid{grid-template-columns:1fr}header{padding:24px 20px 26px}main{padding:16px 12px 30px}.panel{padding:17px}.add{flex-direction:column}button{min-height:44px}}
+  </style>
+</head>
+<body>
+  <header><small>IUT de Rouen · R512 Cloud Computing</small><h1>Campus Cloud</h1><p>Prototype d'application Web adaptée au mobile · TP4</p></header>
+  <main>
+    <section class="grid" aria-label="Tableau de bord">
+      <div class="panel">
+        <h2>Mon carnet de tâches</h2>
+        <p class="sub">Ajoute des tâches pour vérifier l'interface sur ordinateur et sur téléphone.</p>
+        <form id="taskForm"><label for="taskName">Nouvelle tâche</label><div class="add"><input id="taskName" maxlength="120" placeholder="Ex. Tester mon application sur mobile" required /><button type="submit">Ajouter</button></div></form>
+        <ul id="tasks" aria-live="polite"></ul>
+        <p class="muted" id="empty">Aucune tâche enregistrée pour le moment.</p>
+      </div>
+      <aside class="panel">
+        <h2>État de l'application</h2>
+        <span id="connectivity" class="pill"><span class="dot"></span><span id="connectivityText">Connexion disponible</span></span>
+        <div class="sep"></div><div class="muted">Tâches enregistrées</div><div class="metric" id="count">0</div>
+        <div class="sep"></div><div class="muted">Support</div><strong>Ordinateur · Smartphone</strong>
+      </aside>
+    </section>
+    <section class="panel"><h2>Architecture du prototype</h2><p class="sub">Le frontend (HTML, CSS et JavaScript) est destiné à être hébergé sur <strong>AWS Amplify Hosting</strong> avec une adresse HTTPS publique.</p>
+      <div class="notice"><strong>Limite du prototype :</strong> les tâches sont sauvegardées uniquement dans ce navigateur (localStorage), et non sur AWS. Pour obtenir un vrai service mobile connecté au Cloud, il faudra ajouter un backend AWS, par exemple une authentification Amazon Cognito et une API.</div>
+    </section>
+  </main>
+  <footer>TP4 R512 · Démonstration pédagogique · Aucune donnée personnelle requise</footer>
+  <script>
+    (()=>{
+      const key='tp4-r512-tasks-v1', form=document.getElementById('taskForm'), input=document.getElementById('taskName'), list=document.getElementById('tasks'), count=document.getElementById('count'), empty=document.getElementById('empty');
+      let tasks=[];try{const v=JSON.parse(localStorage.getItem(key)||'[]');if(Array.isArray(v))tasks=v.filter(s=>typeof s==='string').slice(0,100)}catch(e){}
+      const save=()=>{try{localStorage.setItem(key,JSON.stringify(tasks))}catch(e){}};
+      const render=()=>{list.textContent='';tasks.forEach((t,i)=>{const li=document.createElement('li'),span=document.createElement('span'),btn=document.createElement('button');span.textContent=t;btn.type='button';btn.className='del';btn.textContent='Supprimer';btn.setAttribute('aria-label','Supprimer : '+t);btn.addEventListener('click',()=>{tasks.splice(i,1);save();render()});li.append(span,btn);list.append(li)});count.textContent=String(tasks.length);empty.hidden=tasks.length>0};
+      form.addEventListener('submit',e=>{e.preventDefault();const v=input.value.trim();if(v){tasks.push(v);save();render();input.value='';input.focus()}});
+      const status=()=>{const online=navigator.onLine;const badge=document.getElementById('connectivity');badge.classList.toggle('offline',!online);document.getElementById('connectivityText').textContent=online?'Navigateur en ligne':'Navigateur hors ligne'};
+      addEventListener('online',status);addEventListener('offline',status);render();status();
+    })();
+  </script>
+</body>
+</html>
